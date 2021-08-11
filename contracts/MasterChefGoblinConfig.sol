@@ -64,8 +64,8 @@ contract MasterChefGoblinConfig is Ownable, GoblinConfig {
         require(lastUpdate >= now - 7 days, "price too stale");
         uint256 lpPrice = r1.mul(1e18).div(r0);
         uint256 maxPriceDiff = goblins[goblin].maxPriceDiff;
-        require(lpPrice <= price.mul(maxPriceDiff).div(10000), "price too high");
-        require(lpPrice >= price.mul(10000).div(maxPriceDiff), "price too low");
+        require(lpPrice.mul(10000) <= price.mul(maxPriceDiff), "price too high");
+        require(lpPrice.mul(maxPriceDiff) >= price.mul(10000), "price too low");
         // 3. Done
         return true;
     }
@@ -76,13 +76,13 @@ contract MasterChefGoblinConfig is Ownable, GoblinConfig {
         return goblins[goblin].acceptDebt;
     }
 
-    /// @dev Return the work factor for the goblin + ETH debt, using 1e4 as denom.
+    /// @dev Return the work factor for the goblin + BaseToken debt, using 1e4 as denom.
     function workFactor(address goblin, uint256 /* debt */) external view returns (uint256) {
         require(isStable(goblin), "!stable");
         return uint256(goblins[goblin].workFactor);
     }
 
-    /// @dev Return the kill factor for the goblin + ETH debt, using 1e4 as denom.
+    /// @dev Return the kill factor for the goblin + BaseToken debt, using 1e4 as denom.
     function killFactor(address goblin, uint256 /* debt */) external view returns (uint256) {
         require(isStable(goblin), "!stable");
         return uint256(goblins[goblin].killFactor);

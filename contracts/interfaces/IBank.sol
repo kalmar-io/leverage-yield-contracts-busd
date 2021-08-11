@@ -61,7 +61,7 @@ interface IBank {
     function totalETH() external view returns (uint256);
 
     /// @dev Add more ETH to the bank. Hope to get some good returns.
-    function deposit() external payable;
+    function deposit() external ;
 
     /// @dev Withdraw ETH from the bank by burning the share tokens.
     function withdraw(uint256 share) external;

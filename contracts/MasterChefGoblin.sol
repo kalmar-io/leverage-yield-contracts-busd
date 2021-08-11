@@ -124,13 +124,13 @@ contract MasterChefGoblin is Ownable, ReentrancyGuard, Goblin {
         address rewardTo = reinvestToTreasury == true ? treasuryAddr : msg.sender;
 
         rewardToken.safeTransfer(rewardTo, bounty);
-        // 3. Convert all the remaining rewards to ETH.
+        // 3. Convert all the remaining rewards to Token.
         address[] memory path = new address[](3);
         path[0] = address(rewardToken);
         path[1] = address(wbnb);
         path[2] = address(baseToken);
         router.swapExactTokensForTokens(reward.sub(bounty), 0, path, address(this), now);
-        // 4. Use add ETH strategy to convert all ETH to LP tokens.
+        // 4. Use add Token strategy to convert all Token to LP tokens.
         baseToken.safeTransfer(address(addStrat), baseToken.myBalance());
         addStrat.execute(address(0), 0, abi.encode(baseToken, fToken, 0));
         // 5. Mint more LP tokens and stake them for more rewards.
@@ -144,20 +144,20 @@ contract MasterChefGoblin is Ownable, ReentrancyGuard, Goblin {
     /// @param debt The amount of user debt to help the strategy make decisions.
     /// @param data The encoded data, consisting of strategy address and calldata.
     function work(uint256 id, address user, uint256 debt, bytes calldata data) 
-        external payable 
+        external  
         onlyOperator nonReentrant 
     {
         // 1. Convert this position back to LP tokens.
         _removeShare(id);
-        // 2. Perform the worker strategy; sending LP tokens + ETH; expecting LP tokens + ETH.
+        // 2. Perform the worker strategy; sending LP tokens + Token; expecting LP tokens + Token.
         (address strat, bytes memory ext) = abi.decode(data, (address, bytes));
         require(okStrats[strat], "unapproved work strategy");
         lpToken.transfer(strat, lpToken.balanceOf(address(this)));
         baseToken.safeTransfer(strat, baseToken.myBalance());
-        Strategy(strat).execute.value(msg.value)(user, debt, ext);
+        Strategy(strat).execute(user, debt, ext);
         // 3. Add LP tokens back to the farming pool.
         _addShare(id);
-        // 4. Return any remaining ETH back to the operator.
+        // 4. Return any remaining Token back to the operator.
         baseToken.safeTransfer(msg.sender, baseToken.myBalance());
     }
 
@@ -192,14 +192,14 @@ contract MasterChefGoblin is Ownable, ReentrancyGuard, Goblin {
         ).add(userBaseToken);
     }
 
-    /// @dev Liquidate the given position by converting it to ETH and return back to caller.
+    /// @dev Liquidate the given position by converting it to Token and return back to caller.
     /// @param id The position ID to perform liquidation
     function liquidate(uint256 id) external onlyOperator nonReentrant {
         // 1. Convert the position back to LP tokens and use liquidate strategy.
         _removeShare(id);
         lpToken.transfer(address(liqStrat), lpToken.balanceOf(address(this)));
         liqStrat.execute(address(0), 0, abi.encode(baseToken, fToken, 0));
-        // 2. Return all available ETH back to the operator.
+        // 2. Return all available Token back to the operator.
         uint256 wad = baseToken.myBalance();
         baseToken.safeTransfer(msg.sender, wad);
         emit Liquidate(id, wad);
@@ -273,6 +273,4 @@ contract MasterChefGoblin is Ownable, ReentrancyGuard, Goblin {
         addStrat = _addStrat;
         liqStrat = _liqStrat;
     }
-
-    function() external payable {}
 }

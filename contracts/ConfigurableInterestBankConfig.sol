@@ -34,7 +34,7 @@ contract TripleSlopeModel {
 }
 
 contract ConfigurableInterestBankConfig is BankConfig, Ownable {
-    /// The minimum ETH debt size per position.
+    /// The minimum Token debt size per position.
     uint256 public minDebtSize;
     /// The portion of interests allocated to the reserve pool.
     uint256 public getReservePoolBps;
@@ -94,12 +94,12 @@ contract ConfigurableInterestBankConfig is BankConfig, Ownable {
         return goblins[goblin].acceptDebt(goblin);
     }
 
-    /// @dev Return the work factor for the goblin + ETH debt, using 1e4 as denom. Revert on non-goblin.
+    /// @dev Return the work factor for the goblin + BaseToken debt, using 1e4 as denom. Revert on non-goblin.
     function workFactor(address goblin, uint256 debt) external view returns (uint256) {
         return goblins[goblin].workFactor(goblin, debt);
     }
 
-    /// @dev Return the kill factor for the goblin + ETH debt, using 1e4 as denom. Revert on non-goblin.
+    /// @dev Return the kill factor for the goblin + BaseToken debt, using 1e4 as denom. Revert on non-goblin.
     function killFactor(address goblin, uint256 debt) external view returns (uint256) {
         return goblins[goblin].killFactor(goblin, debt);
     }

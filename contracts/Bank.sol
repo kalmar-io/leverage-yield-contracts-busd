@@ -92,7 +92,7 @@ contract Bank is ERC20, ReentrancyGuard, Ownable {
         }
     }
 
-    /// @dev Return the ETH debt value given the debt share. Be careful of unaccrued interests.
+    /// @dev Return the  debt value given the debt share. Be careful of unaccrued interests.
     /// @param debtShare The debt share to be converted.
     function debtShareToVal(uint256 debtShare) public view returns (uint256) {
         if (glbDebtShare == 0) return debtShare; // When there's no share, 1 share = 1 val.
@@ -106,37 +106,39 @@ contract Bank is ERC20, ReentrancyGuard, Ownable {
         return debtVal.mul(glbDebtShare).div(glbDebtVal);
     }
 
-    /// @dev Return ETH value and debt of the given position. Be careful of unaccrued interests.
+    /// @dev Return Token value and debt of the given position. Be careful of unaccrued interests.
     /// @param id The position ID to query.
     function positionInfo(uint256 id) public view returns (uint256, uint256) {
         Position storage pos = positions[id];
         return (Goblin(pos.goblin).health(id), debtShareToVal(pos.debtShare));
     }
 
-    /// @dev Return the total ETH entitled to the token holders. Be careful of unaccrued interests.
+    /// @dev Return the total Token entitled to the token holders. Be careful of unaccrued interests.
     function totalBEP20() public view returns (uint256) {
         return token.myBalance().add(glbDebtVal).sub(reservePool);
     }
 
-    /// @dev Add more ETH to the bank. Hope to get some good returns.
+    /// @dev Add more Token to the bank. Hope to get some good returns.
     function deposit(uint256 amountToken) external transferTokenToVault(amountToken) accrue(amountToken) nonReentrant {
         uint256 total = totalBEP20().sub(amountToken);
         uint256 share = total == 0 ? amountToken : amountToken.mul(totalSupply()).div(total);
         _mint(msg.sender, share);
+        require(totalSupply() > 1e17, "no tiny shares");
     }
 
-    /// @dev Withdraw ETH from the bank by burning the share tokens.
+    /// @dev Withdraw Token from the bank by burning the share tokens.
     function withdraw(uint256 share) external accrue(0) nonReentrant {
         uint256 amount = share.mul(totalBEP20()).div(totalSupply());
         _burn(msg.sender, share);
         SafeToken.safeTransfer(token, msg.sender, amount);
+        require(totalSupply() > 1e17, "no tiny shares");
     }
 
     /// @dev Create a new farming position to unlock your yield farming potential.
     /// @param id The ID of the position to unlock the earning. Use ZERO for new position.
     /// @param goblin The address of the authorized goblin to work for this position.
-    /// @param loan The amount of ETH to borrow from the pool.
-    /// @param maxReturn The max amount of ETH to return to the pool.
+    /// @param loan The amount of Token to borrow from the pool.
+    /// @param maxReturn The max amount of Token to return to the pool.
     /// @param data The calldata to pass along to the goblin for more working context.
     function work(uint256 id, address goblin, uint256 principalAmount, uint256 loan, uint256 maxReturn, bytes calldata data)
         external
@@ -177,7 +179,7 @@ contract Bank is ERC20, ReentrancyGuard, Ownable {
             require(health.mul(workFactor) >= debt.mul(10000), "bad work factor");
             _addDebt(id, debt);
         }
-        // 5. Return excess ETH back.
+        // 5. Return excess Token back.
         if (back > lessDebt) SafeToken.safeTransfer(token, msg.sender, back.sub(lessDebt));
     }
 
@@ -191,7 +193,7 @@ contract Bank is ERC20, ReentrancyGuard, Ownable {
         uint256 health = Goblin(pos.goblin).health(id);
         uint256 killFactor = config.killFactor(pos.goblin, debt);
         require(health.mul(killFactor) < debt.mul(10000), "can't liquidate");
-        // 2. Perform liquidation and compute the amount of ETH received.
+        // 2. Perform liquidation and compute the amount of Token received.
         uint256 beforeETH = token.myBalance();
         Goblin(pos.goblin).liquidate(id);
         uint256 back = token.myBalance().sub(beforeETH);
@@ -239,15 +241,15 @@ contract Bank is ERC20, ReentrancyGuard, Ownable {
         config = _config;
     }
 
-    /// @dev Withdraw ETH reserve for underwater positions to the given address.
-    /// @param to The address to transfer ETH to.
-    /// @param value The number of ETH tokens to withdraw. Must not exceed `reservePool`.
+    /// @dev Withdraw Token reserve for underwater positions to the given address.
+    /// @param to The address to transfer Token to.
+    /// @param value The number of Token tokens to withdraw. Must not exceed `reservePool`.
     function withdrawReserve(address to, uint256 value) external onlyOwner nonReentrant {
         reservePool = reservePool.sub(value);
         SafeToken.safeTransfer(token, to, value);
     }
 
-    /// @dev Reduce ETH reserve, effectively giving them to the depositors.
+    /// @dev Reduce Token reserve, effectively giving them to the depositors.
     /// @param value The number of ETH reserve to reduce.
     function reduceReserve(uint256 value) external onlyOwner {
         reservePool = reservePool.sub(value);
@@ -273,7 +275,4 @@ contract Bank is ERC20, ReentrancyGuard, Ownable {
         require(_token != token, "!token");
         SafeToken.safeTransfer(_token, to, value);
     }
-
-    /// @dev Fallback function to accept ETH. Goblins will send ETH back the pool.
-    function() external {}
 }

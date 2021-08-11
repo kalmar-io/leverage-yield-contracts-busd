@@ -24,7 +24,6 @@ contract StrategyLiquidate is Ownable, ReentrancyGuard, Strategy {
     /// @param data Extra calldata information passed along to this strategy.
     function execute(address /* user */, uint256 /* debt */, bytes calldata data)
         external
-        payable
         nonReentrant
     {
         // 1. Find out what farming token we are dealing with.

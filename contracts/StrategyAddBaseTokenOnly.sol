@@ -17,29 +17,28 @@ contract StrategyAddBaseTokenOnly is Ownable, ReentrancyGuard, Strategy {
     IUniswapV2Factory public factory;
     IUniswapV2Router02 public router;
 
-    /// @dev Create a new add ETH only strategy instance.
+    /// @dev Create a new add Token only strategy instance.
     /// @param _router The Uniswap router smart contract.
     constructor(IUniswapV2Router02 _router) public {
         factory = IUniswapV2Factory(_router.factory());
         router = _router;
     }
 
-    /// @dev Execute worker strategy. Take LP tokens + ETH. Return LP tokens + ETH.
+    /// @dev Execute worker strategy. Take LP tokens + BaseToken. Return LP tokens + BaseToken.
     /// @param data Extra calldata information passed along to this strategy.
     function execute(address /* user */, uint256 /* debt */, bytes calldata data)
         external
-        payable
         nonReentrant
     {
         // 1. Find out what farming token we are dealing with and min additional LP tokens.
         (address baseToken, address fToken, uint256 minLPAmount) = abi.decode(data, (address, address, uint256));
         IUniswapV2Pair lpToken = IUniswapV2Pair(factory.getPair(fToken, baseToken));
-        // 2. Compute the optimal amount of ETH to be converted to farming tokens.
+        // 2. Compute the optimal amount of Token to be converted to farming tokens.
         uint256 balance = baseToken.myBalance();
         (uint256 r0, uint256 r1, ) = lpToken.getReserves();
         uint256 rIn = lpToken.token0() == baseToken ? r0 : r1;
-        uint256 aIn = Math.sqrt(rIn.mul(balance.mul(3988000).add(rIn.mul(3988009)))).sub(rIn.mul(1997)) / 1994;
-        // 3. Convert that portion of ETH to farming tokens.
+        uint256 aIn = Math.sqrt(rIn.mul(balance.mul(399000000).add(rIn.mul(399000625)))).sub(rIn.mul(19975)) / 19950;
+        // 3. Convert that portion of Token to farming tokens.
         address[] memory path = new address[](2);
         path[0] = baseToken;
         path[1] = fToken;
@@ -65,5 +64,4 @@ contract StrategyAddBaseTokenOnly is Ownable, ReentrancyGuard, Strategy {
         SafeToken.safeTransfer(token, to, value);
     }
 
-    function() external payable {}
 }

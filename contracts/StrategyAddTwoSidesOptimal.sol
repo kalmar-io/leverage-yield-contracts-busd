@@ -83,12 +83,11 @@ contract StrategyAddTwoSidesOptimal is Ownable, ReentrancyGuard, Strategy {
         return numerator.div(denominator);
     }
 
-    /// @dev Execute worker strategy. Take LP tokens + ETH. Return LP tokens + ETH.
+    /// @dev Execute worker strategy. Take LP tokens + BaseToken. Return LP tokens + BaseToken.
     /// @param user User address
     /// @param data Extra calldata information passed along to this strategy.
     function execute(address user, uint256, /* debt */ bytes calldata data) 
-        external         
-        payable  
+        external           
         onlyGoblin       
         nonReentrant 
     {
@@ -102,7 +101,7 @@ contract StrategyAddTwoSidesOptimal is Ownable, ReentrancyGuard, Strategy {
         IUniswapV2Pair lpToken = IUniswapV2Pair(factory.getPair(fToken, baseToken));  
         baseToken.safeApprove(address(router), uint256(-1));
         fToken.safeApprove(address(router), uint256(-1));      
-        // 2. Compute the optimal amount of ETH and fToken to be converted.  
+        // 2. Compute the optimal amount of Token and fToken to be converted.  
         if (fAmount > 0) {  
             fToken.safeTransferFrom(user, address(this), fAmount);            
         }
@@ -113,7 +112,7 @@ contract StrategyAddTwoSidesOptimal is Ownable, ReentrancyGuard, Strategy {
             (uint256 ethReserve, uint256 fReserve) = lpToken.token0() == baseToken ? (r0, r1) : (r1, r0);
             (swapAmt, isReversed) = optimalDeposit(baseToken.myBalance(), fToken.myBalance(), ethReserve, fReserve);
         }
-        // 3. Convert between ETH and farming tokens
+        // 3. Convert between Token and farming tokens
         address[] memory path = new address[](2);
         (path[0], path[1]) = isReversed ? (fToken, baseToken) : (baseToken, fToken);
         if (swapAmt > 0) router.swapExactTokensForTokens(swapAmt, 0, path, address(this), now);
@@ -135,6 +134,4 @@ contract StrategyAddTwoSidesOptimal is Ownable, ReentrancyGuard, Strategy {
     function recover(address token, address to, uint256 value) external onlyOwner nonReentrant {
         SafeToken.safeTransfer(token, to, value);
     }
-
-    function() external payable {}
 }

@@ -11,7 +11,7 @@ contract SimpleBankConfig is BankConfig, Ownable {
         uint256 killFactor;
     }
 
-    /// The minimum ETH debt size per position.
+    /// The minimum Token debt size per position.
     uint256 public minDebtSize;
     /// The interest rate per second, multiplied by 1e18.
     uint256 public interestRate;
@@ -85,13 +85,13 @@ contract SimpleBankConfig is BankConfig, Ownable {
         return goblins[goblin].acceptDebt;
     }
 
-    /// @dev Return the work factor for the goblin + ETH debt, using 1e4 as denom. Revert on non-goblin.
+    /// @dev Return the work factor for the goblin + Token debt, using 1e4 as denom. Revert on non-goblin.
     function workFactor(address goblin, uint256 /* debt */) external view returns (uint256) {
         require(goblins[goblin].isGoblin, "!goblin");
         return goblins[goblin].workFactor;
     }
 
-    /// @dev Return the kill factor for the goblin + ETH debt, using 1e4 as denom. Revert on non-goblin.
+    /// @dev Return the kill factor for the goblin + Token debt, using 1e4 as denom. Revert on non-goblin.
     function killFactor(address goblin, uint256 /* debt */) external view returns (uint256) {
         require(goblins[goblin].isGoblin, "!goblin");
         return goblins[goblin].killFactor;
